@@ -78,7 +78,17 @@ public class TextShape: Shape, ShapeSelectable {
 
   public func render(in context: CGContext) {
     if isBeingEdited { return }
+      
+    // Place the shape behind the text shape
     transform.begin(context: context)
+    context.setFillColor(UIColor.red.cgColor)
+    let exWidth = boundingRect.size.width * 0.2
+    let exHeight = boundingRect.size.height * 0.4
+    let size = CGSize(width: boundingRect.size.width + exWidth, height: boundingRect.size.height + exHeight)
+    let origin = CGPoint(x: boundingRect.origin.x - exWidth/2, y: boundingRect.origin.y - exHeight/2)
+    context.addRect(CGRect(origin: origin, size: size))
+    context.fillPath()
+      
     (self.text as NSString).draw(
       in: CGRect(origin: boundingRect.origin, size: self.boundingRect.size),
       withAttributes: [
