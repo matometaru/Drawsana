@@ -81,11 +81,13 @@ public class TextShape: Shape, ShapeSelectable {
       
     // Place the shape behind the text shape
     transform.begin(context: context)
-    context.setFillColor(UIColor.red.cgColor)
-    let exWidth = boundingRect.size.width * 0.2
+    context.setFillColor(UIColor(hexString: "#f9f0ca").cgColor)
+    let exWidth = boundingRect.size.width * 0.1
     let exHeight = boundingRect.size.height * 0.4
     let size = CGSize(width: boundingRect.size.width + exWidth, height: boundingRect.size.height + exHeight)
-    let origin = CGPoint(x: boundingRect.origin.x - exWidth/2, y: boundingRect.origin.y - exHeight/2)
+    let origin = CGPoint(
+        x: boundingRect.origin.x - exWidth/2 - exWidth*0.1,
+        y: boundingRect.origin.y - exHeight/2 - 0.25)
     context.addRect(CGRect(origin: origin, size: size))
     context.fillPath()
       
