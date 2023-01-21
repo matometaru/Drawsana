@@ -48,7 +48,7 @@ class ViewController: UIViewController {
     target: self,
     action: #selector(ViewController.removeSelection(_:)))
   let toolButton = UIButton(type: .custom)
-  let imageView = UIImageView(image: UIImage(named: "demo"))
+  let imageView = UIImageView(image: UIImage(named: "demo3"))
   let undoButton = UIButton()
   let redoButton = UIButton()
   let strokeColorButton = UIButton()
@@ -200,7 +200,7 @@ class ViewController: UIViewController {
     drawingView.userSettings.strokeColor = Constants.colors.first!
     drawingView.userSettings.fillColor = Constants.colors.last!
     drawingView.userSettings.strokeWidth = strokeWidths[strokeWidthIndex]
-    drawingView.userSettings.fontName = "Marker Felt"
+    drawingView.userSettings.fontName = "Helvetica Neue"
     applyUndoViewState()
   }
 
