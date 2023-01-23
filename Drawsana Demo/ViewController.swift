@@ -1,68 +1,91 @@
-//
-//  ViewController.swift
-//  AMDrawingView Demo
-//
-//  Created by Steve Landey on 7/23/18.
-//  Copyright © 2018 Asana. All rights reserved.
-//
-
 import UIKit
 import Drawsana
 import QuickLook
+
+extension UIColor {
+    convenience init?(hex: String) {
+        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
+        
+        var rgb: UInt64 = 0
+        var r: CGFloat = 0.0
+        var g: CGFloat = 0.0
+        var b: CGFloat = 0.0
+        var a: CGFloat = 1.0
+        
+        let length = hexSanitized.count
+        guard Scanner(string: hexSanitized).scanHexInt64(&rgb) else { return nil }
+        
+        if length == 6 {
+            r = CGFloat((rgb & 0xFF0000) >> 16) / 255.0
+            g = CGFloat((rgb & 0x00FF00) >> 8) / 255.0
+            b = CGFloat(rgb & 0x0000FF) / 255.0
+        } else if length == 8 {
+            r = CGFloat((rgb & 0xFF000000) >> 24) / 255.0
+            g = CGFloat((rgb & 0x00FF0000) >> 16) / 255.0
+            b = CGFloat((rgb & 0x0000FF00) >> 8) / 255.0
+            a = CGFloat(rgb & 0x000000FF) / 255.0
+        } else {
+            return nil
+        }
+        
+        self.init(red: r, green: g, blue: b, alpha: a)
+    }
+}
 
 /**
  Bare-bones demonstration of the Drawsana API. Drawsana does not provide its
  own UI, so this demo has a very simple one.
  */
 class ViewController: UIViewController {
-  struct Constants {
-    static let colors: [UIColor?] = [
+    struct Constants {
+      static let buttonSize: CGFloat = 30
+    static let strokeColors: [UIColor?] = [
       .black,
-      .white,
-      .red,
-      .orange,
-      .yellow,
-      .green,
       .blue,
-      .purple,
-      .brown,
-      .gray,
-      nil
+      .red
     ]
-  }
+    static let bgColors: [UIColor?] = [
+      UIColor(hex: "f9f0ca"),
+      UIColor.init(red: 0, green: 0, blue: 0, alpha: 0),
+    //      UIColor.blue,
+      UIColor.red
+    ]
+    }
 
-  lazy var drawingView: DrawsanaView = {
+    lazy var drawingView: DrawsanaView = {
     let drawingView = DrawsanaView()
     drawingView.delegate = self
     drawingView.operationStack.delegate = self
     return drawingView
-  }()
+    }()
 
-  lazy var viewFinalImageButton = UIBarButtonItem(
+    lazy var viewFinalImageButton = UIBarButtonItem(
     title: "View",
     style: .plain,
     target: self,
     action: #selector(ViewController.viewFinalImage(_:)))
-  lazy var deleteButton = UIBarButtonItem(
+    lazy var deleteButton = UIBarButtonItem(
     barButtonSystemItem: .trash,
     target: self,
     action: #selector(ViewController.removeSelection(_:)))
-  let toolButton = UIButton(type: .custom)
-  let imageView = UIImageView(image: UIImage(named: "demo3"))
-  let undoButton = UIButton()
-  let redoButton = UIButton()
-  let strokeColorButton = UIButton()
-  let fillColorButton = UIButton()
-  let strokeWidthButton = UIButton()
-  let reloadButton = UIButton()
+    let toolButton = UIButton(type: .custom)
+    let imageView = UIImageView(image: UIImage(named: "demo3"))
+    let undoButton = UIButton()
+    let redoButton = UIButton()
+    let strokeColorButton = UIButton()
+    let strokeColorLine = UIView(frame: CGRectMake(0, 0, Constants.buttonSize, 4))
+    let fillColorButton = UIButton()
+//  let strokeWidthButton = UIButton()
+//  let reloadButton = UIButton()
   lazy var toolbarStackView = {
     return UIStackView(arrangedSubviews: [
       undoButton,
       redoButton,
       strokeColorButton,
       fillColorButton,
-      strokeWidthButton,
-      reloadButton,
+//      strokeWidthButton,
+//      reloadButton,
       toolButton,
     ])
   }()
@@ -76,26 +99,26 @@ class ViewController: UIViewController {
   lazy var selectionTool = { return SelectionTool(delegate: self) }()
 
   lazy var tools: [DrawingTool] = { return [
-    PenTool(),
+//    PenTool(),
     textTool,
     selectionTool,
-    EllipseTool(),
-    EraserTool(),
+//    EllipseTool(),
+//    EraserTool(),
     LineTool(),
-    ArrowTool(),
-    RectTool(),
-    StarTool(),
-    TriangleTool(),
-    PentagonTool(),
-    AngleTool(),
+//    ArrowTool(),
+//    RectTool(),
+//    StarTool(),
+//    TriangleTool(),
+//    PentagonTool(),
+//    AngleTool(),
   ] }()
 
-  let strokeWidths: [CGFloat] = [
-    5,
-    10,
-    20,
-  ]
-  var strokeWidthIndex = 0
+//  let strokeWidths: [CGFloat] = [
+//    5,
+//    10,
+//    20,
+//  ]
+//  var strokeWidthIndex = 0
 
   // Just AutoLayout code here
   override func loadView() {
@@ -114,26 +137,17 @@ class ViewController: UIViewController {
     redoButton.setTitle("→", for: .normal)
     redoButton.addTarget(drawingView.operationStack, action: #selector(DrawingOperationStack.redo), for: .touchUpInside)
 
-    strokeColorButton.translatesAutoresizingMaskIntoConstraints = false
-    strokeColorButton.addTarget(self, action: #selector(ViewController.openStrokeColorMenu(_:)), for: .touchUpInside)
-    strokeColorButton.layer.borderColor = UIColor.white.cgColor
-    strokeColorButton.layer.borderWidth = 0.5
+      strokeColorButton.translatesAutoresizingMaskIntoConstraints = false
+      strokeColorButton.addTarget(self, action: #selector(ViewController.openStrokeColorMenu(_:)), for: .touchUpInside)
+      strokeColorButton.setImage(UIImage(systemName: "character"), for: .normal)
+      strokeColorLine.backgroundColor = UIColor.red
+      strokeColorLine.layer.position = CGPoint(x: 15, y: 30)
+      strokeColorButton.addSubview(strokeColorLine)
 
     fillColorButton.translatesAutoresizingMaskIntoConstraints = false
     fillColorButton.addTarget(self, action: #selector(ViewController.openFillColorMenu(_:)), for: .touchUpInside)
     fillColorButton.layer.borderColor = UIColor.white.cgColor
     fillColorButton.layer.borderWidth = 0.5
-
-    strokeWidthButton.translatesAutoresizingMaskIntoConstraints = false
-    strokeWidthButton.addTarget(self, action: #selector(ViewController.cycleStrokeWidth(_:)), for: .touchUpInside)
-    strokeWidthButton.layer.borderColor = UIColor.white.cgColor
-    strokeWidthButton.layer.borderWidth = 0.5
-
-    reloadButton.translatesAutoresizingMaskIntoConstraints = false
-    reloadButton.addTarget(self, action: #selector(ViewController.reload(_:)), for: .touchUpInside)
-    reloadButton.layer.borderColor = UIColor.white.cgColor
-    reloadButton.layer.borderWidth = 0.5
-    reloadButton.setTitle("🔁", for: .normal)
 
     toolbarStackView.translatesAutoresizingMaskIntoConstraints = false
     toolbarStackView.axis = .horizontal
@@ -179,10 +193,10 @@ class ViewController: UIViewController {
       drawingView.heightAnchor.constraint(equalTo: imageView.heightAnchor).withPriority(.defaultLow),
 
       // Color buttons have constant size
-      strokeColorButton.widthAnchor.constraint(equalToConstant: 30),
-      strokeColorButton.heightAnchor.constraint(equalToConstant: 30),
-      fillColorButton.widthAnchor.constraint(equalToConstant: 30),
-      fillColorButton.heightAnchor.constraint(equalToConstant: 30),
+      strokeColorButton.widthAnchor.constraint(equalToConstant: Constants.buttonSize),
+      strokeColorButton.heightAnchor.constraint(equalToConstant: Constants.buttonSize),
+      fillColorButton.widthAnchor.constraint(equalToConstant: Constants.buttonSize),
+      fillColorButton.heightAnchor.constraint(equalToConstant: Constants.buttonSize),
     ])
   }
 
@@ -197,9 +211,9 @@ class ViewController: UIViewController {
 
     // Set initial tool to whatever `toolIndex` says
     drawingView.set(tool: tools[0])
-    drawingView.userSettings.strokeColor = Constants.colors.first!
-    drawingView.userSettings.fillColor = Constants.colors.last!
-    drawingView.userSettings.strokeWidth = strokeWidths[strokeWidthIndex]
+    drawingView.userSettings.strokeColor = Constants.strokeColors.first!
+    drawingView.userSettings.fillColor = Constants.bgColors.last!
+    drawingView.userSettings.strokeWidth = 5
     drawingView.userSettings.fontName = "Helvetica Neue"
     applyUndoViewState()
   }
@@ -243,13 +257,13 @@ class ViewController: UIViewController {
 
   @objc private func openStrokeColorMenu(_ sender: UIView) {
     presentPopover(
-      ColorPickerViewController(identifier: "stroke", colors: Constants.colors, delegate: self),
+      ColorPickerViewController(identifier: "stroke", colors: Constants.strokeColors, delegate: self),
       sourceView: sender)
   }
 
   @objc private func openFillColorMenu(_ sender: UIView) {
     presentPopover(
-      ColorPickerViewController(identifier: "fill", colors: Constants.colors, delegate: self),
+      ColorPickerViewController(identifier: "fill", colors: Constants.bgColors, delegate: self),
       sourceView: sender)
   }
 
@@ -259,10 +273,10 @@ class ViewController: UIViewController {
       sourceView: sender)
   }
 
-  @objc private func cycleStrokeWidth(_ sender: Any?) {
-    strokeWidthIndex = (strokeWidthIndex + 1) % strokeWidths.count
-    drawingView.userSettings.strokeWidth = strokeWidths[strokeWidthIndex]
-  }
+//  @objc private func cycleStrokeWidth(_ sender: Any?) {
+//    strokeWidthIndex = (strokeWidthIndex + 1) % strokeWidths.count
+//    drawingView.userSettings.strokeWidth = strokeWidths[strokeWidthIndex]
+//  }
 
   @objc private func removeSelection(_ sender: Any?) {
     if let selectedShape = drawingView.toolSettings.selectedShape {
@@ -270,18 +284,18 @@ class ViewController: UIViewController {
     }
   }
 
-  @objc private func reload(_ sender: Any?) {
-    print("Serializing/deserializing...")
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
-    let jsonData = try! encoder.encode(drawingView.drawing)
-    print(String(data: jsonData, encoding: .utf8)!)
-    drawingView.drawing = try! JSONDecoder().decode(
-      Drawing.self,
-      from: jsonData)
-    print(drawingView.drawing.shapes)
-    print("Done")
-  }
+//  @objc private func reload(_ sender: Any?) {
+//    print("Serializing/deserializing...")
+//    let encoder = JSONEncoder()
+//    encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+//    let jsonData = try! encoder.encode(drawingView.drawing)
+//    print(String(data: jsonData, encoding: .utf8)!)
+//    drawingView.drawing = try! JSONDecoder().decode(
+//      Drawing.self,
+//      from: jsonData)
+//    print(drawingView.drawing.shapes)
+//    print("Done")
+//  }
 
   /// Update button states to reflect undo stack
   private func applyUndoViewState() {
@@ -327,18 +341,19 @@ extension ViewController: DrawsanaViewDelegate {
   }
 
   func drawsanaView(_ drawsanaView: DrawsanaView, didChangeStrokeColor strokeColor: UIColor?) {
-    strokeColorButton.backgroundColor = drawingView.userSettings.strokeColor
-    strokeColorButton.setTitle(drawingView.userSettings.strokeColor == nil ? "x" : "", for: .normal)
+//      strokeColorButton.backgroundColor = drawingView.userSettings.strokeColor
+      strokeColorLine.backgroundColor = drawingView.userSettings.strokeColor
+//      strokeColorButton.setTitle(drawingView.userSettings.strokeColor == nil ? "x" : "", for: .normal)
   }
 
   func drawsanaView(_ drawsanaView: DrawsanaView, didChangeFillColor fillColor: UIColor?) {
-    fillColorButton.backgroundColor = drawingView.userSettings.fillColor
+//    fillColorButton.backgroundColor = drawingView.userSettings.fillColor
     fillColorButton.setTitle(drawingView.userSettings.fillColor == nil ? "x" : "", for: .normal)
   }
 
   func drawsanaView(_ drawsanaView: DrawsanaView, didChangeStrokeWidth strokeWidth: CGFloat) {
-    strokeWidthIndex = strokeWidths.firstIndex(of: drawingView.userSettings.strokeWidth) ?? 0
-    strokeWidthButton.setTitle("\(Int(strokeWidths[strokeWidthIndex]))", for: .normal)
+//    strokeWidthIndex = strokeWidths.firstIndex(of: drawingView.userSettings.strokeWidth) ?? 0
+//    strokeWidthButton.setTitle("\(Int(strokeWidths[strokeWidthIndex]))", for: .normal)
   }
 
   func drawsanaView(_ drawsanaView: DrawsanaView, didChangeFontName fontName: String) {
