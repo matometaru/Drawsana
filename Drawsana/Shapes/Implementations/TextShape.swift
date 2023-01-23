@@ -24,6 +24,7 @@ public class TextShape: Shape, ShapeSelectable {
   public var fontName: String = "Helvetica Neue"
   public var fontSize: CGFloat = 24
   public var fillColor: UIColor = .black
+  public var bgColor: UIColor = .black
   /// If user drags the text box to an exact width, we need to respect it instead
   /// of automatically sizing the text box to fit the text.
   public var explicitWidth: CGFloat?
@@ -81,7 +82,7 @@ public class TextShape: Shape, ShapeSelectable {
       
     // Place the shape behind the text shape
     transform.begin(context: context)
-    context.setFillColor(UIColor(hexString: "#f9f0ca").cgColor)
+    context.setFillColor(bgColor.cgColor)
     let exWidth = boundingRect.size.width * 0.1
     let exHeight = boundingRect.size.height * 0.4
     let size = CGSize(width: boundingRect.size.width + exWidth, height: boundingRect.size.height + exHeight)
@@ -102,6 +103,7 @@ public class TextShape: Shape, ShapeSelectable {
 
   public func apply(userSettings: UserSettings) {
     fillColor = userSettings.strokeColor ?? .black
+    bgColor = userSettings.fillColor ?? UIColor.init(red: 0, green: 0, blue: 0, alpha: 0)
     fontName = userSettings.fontName
     fontSize = userSettings.fontSize
   }
