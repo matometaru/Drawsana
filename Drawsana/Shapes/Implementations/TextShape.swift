@@ -79,6 +79,7 @@ public class TextShape: Shape, ShapeSelectable {
 
   public func render(in context: CGContext) {
     if isBeingEdited { return }
+    if text == "" { return }
       
     // Place the shape behind the text shape
     transform.begin(context: context)
